@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leaderboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Rubik:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <style>
+    :root { --theme-red: #ef4444; --theme-yellow: #f59e0b; --theme-green: #22c55e; --glass:#0b0b0bcc; --border: rgba(255,255,255,.12);}    
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Chakra Petch', 'Rubik', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      color: #f8fafc;
+      background: radial-gradient(1200px 800px at 10% 10%, rgba(239,68,68,.15), transparent 60%),
+                  radial-gradient(1000px 700px at 90% 20%, rgba(245,158,11,.15), transparent 60%),
+                  radial-gradient(900px 600px at 50% 100%, rgba(34,197,94,.15), transparent 60%),
+                  #0a0a0a;
+      padding: 32px;
+    }
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: 0 15px 35px rgba(0,0,0,.45);
+      overflow: hidden;
+      backdrop-filter: blur(6px);
+    }
+    .header {
+      padding: 24px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(90deg, rgba(239,68,68,.15), rgba(245,158,11,.15), rgba(34,197,94,.15));
+    }
+    .title {
+      margin: 0;
+      font-size: 32px;
+      letter-spacing: 0.5px;
+      background: linear-gradient(90deg, var(--theme-red), var(--theme-yellow), var(--theme-green));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      font-weight: 700;
+      text-align: left;
+      padding: 14px 18px;
+      font-size: 14px;
+      color: #e5e7eb;
+      background: rgba(255,255,255,.04);
+      border-bottom: 1px solid var(--border);
+    }
+    tbody td { padding: 14px 18px; border-bottom: 1px solid rgba(255,255,255,.06); color: #e5e7eb; }
+    tbody tr { transition: transform .15s ease, background .2s ease, box-shadow .2s ease; }
+    tbody tr:hover { transform: translateY(-2px); background: rgba(255,255,255,.03); box-shadow: inset 0 0 0 1px rgba(255,255,255,.04); }
+    .rank-badge { display: inline-block; min-width: 28px; text-align: center; padding: 6px 10px; border-radius: 9999px; font-weight: 700; font-size: 12px; color: #0a0a0a; }
+    .rank-1 { background: linear-gradient(135deg, var(--theme-yellow), #fde047); }
+    .rank-2 { background: linear-gradient(135deg, #d1d5db, #e5e7eb); }
+    .rank-3 { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .score { font-weight: 700; color: #d1fae5; }
+    .footer { padding: 14px 18px; text-align: right; }
+    .btn { background-image: linear-gradient(90deg, var(--theme-red), var(--theme-yellow), var(--theme-green)); border: none; color: #0a0a0a; padding: 10px 16px; border-radius: 9999px; font-weight: 700; cursor: pointer; transition: transform .2s ease, box-shadow .2s ease, filter .2s ease; }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(0,0,0,.35); filter: brightness(1.05); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card" id="card">
+      <div class="header">
+        <h1 class="title">Leaderboard</h1>
+      </div>
+      <table id="leaderboard">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Display Name</th>
+            <th>Score</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Leaderboard rows will appear here -->
+        </tbody>
+      </table>
+      <div class="footer">
+        <button class="btn" onclick="window.history.back()">Back</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function fetchLeaderboard() {
+      try {
+        const response = await fetch('http://localhost:4000/api/leaderboard');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const tbody = document.querySelector('#leaderboard tbody');
+        tbody.innerHTML = ''; // Clear previous rows
+
+        // Sort by score descending for ranking
+        const sorted = Array.isArray(data) ? [...data].sort((a,b) => (b.score||0) - (a.score||0)) : [];
+        sorted.forEach((user, idx) => {
+          const row = document.createElement('tr');
+
+          const rankCell = document.createElement('td');
+          const rankBadge = document.createElement('span');
+          const rank = idx + 1;
+          rankBadge.className = `rank-badge ${rank===1?'rank-1':rank===2?'rank-2':rank===3?'rank-3':''}`;
+          rankBadge.textContent = `#${rank}`;
+          rankCell.appendChild(rankBadge);
+          row.appendChild(rankCell);
+
+          const nameCell = document.createElement('td');
+          nameCell.textContent = user.displayName;
+          row.appendChild(nameCell);
+
+          const scoreCell = document.createElement('td');
+          scoreCell.className = 'score';
+          scoreCell.textContent = user.score;
+          row.appendChild(scoreCell);
+
+          tbody.appendChild(row);
+        });
+
+        // Animate rows in
+        if (window.gsap) {
+          const rows = tbody.querySelectorAll('tr');
+          gsap.fromTo(rows, {opacity:0, y:12}, {opacity:1, y:0, duration:.45, stagger:.05, ease:'power2.out'});
+        }
+
+      } catch (error) {
+        console.error('Error fetching leaderboard:', error);
+      }
+    }
+
+    // Fetch leaderboard on page load
+    window.onload = () => {
+      if (window.gsap) {
+        gsap.fromTo('#card', {opacity:0, y:20, scale:.98}, {opacity:1, y:0, scale:1, duration:.6, ease:'power3.out'});
+      }
+      fetchLeaderboard();
+    };
+  </script>
+</body>
+</html>

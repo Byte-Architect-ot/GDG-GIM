@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GDG GIM</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Rubik:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --theme-red: #ef4444;
+      --theme-yellow: #f59e0b;
+      --theme-green: #22c55e;
+      --glass-bg: rgba(0,0,0,0.55);
+      --glass-border: rgba(255,255,255,0.15);
+    }
+    body {
+      font-family: 'Chakra Petch', 'Rubik', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background-image: url("image.jpg");
+      background-position: center;
+      background-size: cover;
+      min-height: 100vh;
+      color: white;
+    }
+    .quiz-container {
+      background: var(--glass-bg);
+      backdrop-filter: blur(5px);
+      border-radius: 20px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+      border: 1px solid var(--glass-border);
+    }
+    .puzzle-tile {
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-repeat: no-repeat;
+      cursor: pointer;
+      border-radius: 6px;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.25);
+      transition: transform .12s ease, box-shadow .2s ease;
+    }
+    .puzzle-tile.selected {
+      outline: 3px solid rgba(255,255,255,0.25);
+      transform: scale(1.02);
+    }
+    .puzzle-tile:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 10px 22px rgba(0,0,0,0.35);
+    }
+    #puzzle-board {
+      width: 90vw;
+      max-width: 320px;
+      height: 90vw;
+      max-height: 320px;
+      display: grid;
+    }
+    .theme-gradient-text {
+      background: linear-gradient(90deg, var(--theme-yellow), var(--theme-green));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .theme-button {
+      background-image: linear-gradient(90deg, var(--theme-green));
+      transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+    }
+    .theme-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.35);
+      filter: brightness(1.05);
+    }
+    .chip {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid var(--glass-border);
+      padding: 6px 10px;
+      border-radius: 9999px;
+    }
+    .glow-ring {
+      position: relative;
+    }
+    .glow-ring:after {
+      content: "";
+      position: absolute;
+      inset: -2px;
+      border-radius: 9999px;
+      background: linear-gradient(90deg, var(--theme-red), var(--theme-yellow), var(--theme-green));
+      filter: blur(12px);
+      opacity: .3;
+      z-index: -1;
+    }
+  </style>
+</head>
+<body class="flex flex-col items-center p-4">
+  <div class="fixed top-0 left-0 w-full flex justify-between items-center px-6 py-3 z-10">
+    <img src="college logo.png" class="h-16" alt="College Logo">
+    <img src="gdglogo.png" class="h-16" alt="ACM Logo">
+  </div>
+
+  <div id="app" class="w-full max-w-4xl flex-1 flex items-center justify-center mt-32">
+    <!-- Welcome Screen -->
+    <div id="welcome-screen" class="quiz-container p-10 text-center w-full">
+      <h1 class="text-4xl md:text-5xl font-bold mb-6 theme-gradient-text">
+        Can You Find The Birds?
+      </h1>
+      <p class="text-lg md:text-xl mb-6 text-gray-200">
+        Let's See If You Can Find In 3 Trials!
+      </p>
+      <div class="mb-6">
+        <input id="username" type="text" placeholder="Enter your name"
+          class="w-full max-w-xs px-4 py-3 rounded-full bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-yellow-400 text-white"/>
+      </div>
+      <div class="flex justify-center space-x-4">
+        <button id="start-btn" class="px-6 py-3 rounded-full font-bold text-black theme-button glow-ring">
+          Start Game <i class="fas fa-play ml-2"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Puzzle Screen -->
+    <div id="puzzle-screen" class="hidden quiz-container p-8 text-center w-full">
+      <h1 id="puzzle-title" class="text-2xl md:text-3xl font-bold mb-4">Level 1 — 3×3</h1>
+      <div id="puzzle-info" class="flex justify-between items-center max-w-lg mx-auto mb-4 text-sm md:text-base">
+        <div class="chip">Level: <span id="puzzle-level">1</span></div>
+        <div class="chip">Time left: <span id="puzzle-time">90</span>s</div>
+        <div class="chip">Moves: <span id="puzzle-moves">0</span></div>
+      </div>
+
+      <div class="flex flex-col md:flex-row items-center justify-center space-y-6 md:space-y-0 md:space-x-8 mb-6">
+        <div id="puzzle-board"></div>
+        <div class="text-center">
+          <p class="mb-2 text-sm text-gray-300">Original Image</p>
+          <img id="original-image" src="images/image1.jpeg" alt="Original Puzzle"
+               class="rounded-lg shadow-lg w-32 h-32 md:w-48 md:h-48 object-cover mx-auto"/>
+        </div>
+      </div>
+
+
+    </div>
+
+    <!-- Results Screen -->
+    <div id="results-screen" class="hidden quiz-container p-8 text-center w-full">
+      <h1 class="text-3xl md:text-4xl font-bold mb-6 theme-gradient-text">
+        Game Complete
+      </h1>
+      <div class="mb-6">
+        <i class="fas fa-trophy text-5xl" style="color: var(--theme-yellow);"></i>
+      </div>
+      <div class="text-xl mb-2">Your total score:</div>
+      <div id="final-score" class="text-4xl font-bold mb-6" style="color: var(--theme-green);">0</div>
+      <div id="performance-comment" class="text-lg text-gray-300 mb-6">Great effort!</div>
+      <div class="flex justify-center">
+        <button id="leaderboard-btn" class="px-6 py-2 rounded-full text-black theme-button">View Leaderboard</button>
+      </div>
+    </div>
+
+    <!-- Leaderboard Screen -->
+    <div id="leaderboard-screen" class="hidden quiz-container p-8 w-full">
+      <h1 class="text-3xl md:text-4xl font-bold mb-8 text-center theme-gradient-text">Leaderboard</h1>
+      <div id="leaderboard-list" class="space-y-2 mb-8"></div>
+      <div class="text-center">
+        <button id="back-to-quiz-btn" class="px-6 py-2 rounded-full text-black theme-button">Go Back To Home</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script>
+    // Animate screen transitions when they become visible
+    const screens = ["welcome-screen", "puzzle-screen", "results-screen", "leaderboard-screen"];
+    // const animateIn = (el) => {
+    //   if (!window.gsap || !el) return;
+    //   gsap.fromTo(el, {opacity: 0, y: 20, scale: .98}, {opacity: 1, y: 0, scale: 1, duration: .6, ease: "power3.out"});
+    //   const buttons = el.querySelectorAll('button');
+    //   gsap.fromTo(buttons, {opacity: 0, y: 10}, {opacity: 1, y: 0, stagger: .06, duration: .4, ease: "power2.out", delay: .1});
+    // };
+    const observer = new MutationObserver(() => {
+      screens.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && !el.classList.contains('hidden')) {
+          animateIn(el);
+        }
+      });
+    });
+    observer.observe(document.getElementById('app'), {subtree: true, attributes: true, attributeFilter: ['class']});
+
+    // Animate leaderboard list items when populated by main script
+    const leaderboardList = document.getElementById('leaderboard-list');
+    if (leaderboardList) {
+      const listObserver = new MutationObserver(() => {
+        const children = Array.from(leaderboardList.children);
+        if (children.length) {
+          gsap.fromTo(children, {opacity: 0, x: -12}, {opacity: 1, x: 0, stagger: .05, duration: .4, ease: "power2.out"});
+        }
+      });
+      listObserver.observe(leaderboardList, {childList: true});
+    }
+  </script>
+  <script src="script.js"></script>
+</body>
+</html>
